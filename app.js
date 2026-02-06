@@ -25,10 +25,11 @@ const swaggerOptions = {
         servers: [
             {
                 url: '/api/v1',
+                description: 'API v1'
             },
         ],
     },
-    apis: ['./src/routes/*.js'], // Path to the API docs
+    apis: ['./src/routes/*.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
@@ -49,6 +50,10 @@ app.get('/', (req, res) => {
         status: 'online',
         message: 'GinkoHub Tools API (ESM) is running',
         docs: '/docs',
+        config: {
+            port: process.env.PORT || 'Passenger managed',
+            host: process.env.HOST || 'Passenger managed'
+        },
         timestamp: new Date().toISOString()
     });
 });
