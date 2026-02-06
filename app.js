@@ -50,12 +50,20 @@ app.get('/docs-json', (req, res) => {
     res.json(swaggerSpec);
 });
 
+const swaggerUiOptions = {
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css',
+    customJs: [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.min.js'
+    ]
+};
+
 app.use('/docs', (req, res, next) => {
     if (!req.originalUrl.endsWith('/')) {
         return res.redirect(301, req.originalUrl + '/');
     }
     next();
-}, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}, swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Error Handling
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
