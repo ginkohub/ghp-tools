@@ -59,8 +59,10 @@ const swaggerUiOptions = {
 };
 
 app.use('/docs', (req, res, next) => {
-    if (!req.originalUrl.endsWith('/')) {
-        return res.redirect(301, req.originalUrl + '/');
+    // Only redirect if it is the root path and missing the trailing slash
+    // req.path is relative to the mount point '/docs'
+    if (req.path === '/' && !req.originalUrl.split('?')[0].endsWith('/')) {
+        return res.redirect(301, req.originalUrl.replace('?', '/?').replace(/([^/])$/, '$1/'));
     }
     next();
 }, swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
