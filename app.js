@@ -50,7 +50,12 @@ app.get('/docs-json', (req, res) => {
     res.json(swaggerSpec);
 });
 
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/docs', (req, res, next) => {
+    if (!req.originalUrl.endsWith('/')) {
+        return res.redirect(301, req.originalUrl + '/');
+    }
+    next();
+}, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Error Handling
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
