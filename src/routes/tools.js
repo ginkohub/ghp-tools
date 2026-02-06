@@ -1,6 +1,6 @@
-const express = require('express');
-const QRCode = require('qrcode');
-const Parser = require('rss-parser');
+import express from 'express';
+import QRCode from 'qrcode';
+import Parser from 'rss-parser';
 
 const router = express.Router();
 const parser = new Parser();
@@ -69,4 +69,4 @@ router.post('/base64', (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

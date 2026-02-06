@@ -1,11 +1,11 @@
 # GinkoHub Tools API
 
-A collection of utility APIs for GitHub Pages projects, optimized for hosting on **Serv00** using Node.js and Phusion Passenger.
+A collection of utility APIs for GitHub Pages projects, optimized for hosting on **Vercel** using Node.js (ESM).
 
 ## 🚀 Features
-- **GitHub Scraper**: Fetch repo stars and user info without API tokens.
+- **GitHub Scraper**: Fetch repo stats (stars, description) using direct scraping.
 - **RSS Parser**: Convert any RSS/Atom feed to JSON.
-- **Image Tools**: Convert images between formats (PNG, WebP, JPG, AVIF) and read metadata.
+- **Image Tools**: Convert images and read metadata using Jimp.
 - **QR Generator**: Generate QR code data URIs from text.
 - **System Info**: Monitor server health and uptime.
 - **Swagger Docs**: Built-in interactive documentation.
@@ -13,7 +13,7 @@ A collection of utility APIs for GitHub Pages projects, optimized for hosting on
 ## 📚 API Documentation
 Once running, visit:
 - **Local**: `http://localhost:3000/docs`
-- **Production**: `https://your-domain.com/docs`
+- **Vercel**: `https://your-project.vercel.app/docs`
 
 ## 🛠️ Local Setup
 1. Clone the repository.
@@ -26,41 +26,25 @@ Once running, visit:
    npm run dev
    ```
 
-## ☁️ Serv00 Deployment (Phusion Passenger)
-Based on the [Serv00 Node.js Guide](https://docs.serv00.com/Node.js/):
+## ☁️ Vercel Deployment
 
-1. **Panel Setup**:
-   - Create a new website of type **Node.js**.
-   - Note the domain directory: `~/domains/your-domain/public_nodejs/`.
-
-2. **Upload**:
-   - Upload all files (except `node_modules` and `.env`) to the `public_nodejs` folder.
-   - Ensure `app.js` is in the root of that folder.
-
-3. **SSH Setup**:
+1. **Push to GitHub**:
+   Ensure your remote is set to your GitHub repository.
    ```bash
-   cd ~/domains/your-domain/public_nodejs/
-   
-   # Optional: Set Node version to v22
-   echo "export PATH=/usr/local/bin/node22/bin:\$PATH" >> ~/.bash_profile
-   source ~/.bash_profile
-   
-   # Install production dependencies
-   npm install --production
+   git push origin main
    ```
 
-4. **Restart**:
-   Whenever you update code, restart the app via panel or command:
-   ```bash
-   devil www restart your-domain
-   ```
+2. **Connect to Vercel**:
+   - Go to [Vercel](https://vercel.com) and import your repository.
+   - The configuration in `vercel.json` will automatically handle the Express routing.
+   - No extra configuration is needed unless you have specific environment variables.
 
 ## 🧪 Technology Stack
 - **Framework**: Express (ES Modules)
 - **Scraping**: Axios + Cheerio
-- **Imaging**: Sharp
+- **Imaging**: Jimp
 - **Documentation**: Swagger JSDoc + Swagger UI
-- **Hosting**: Serv00 (FreeBSD + Phusion Passenger)
+- **Hosting**: Vercel
 
 ---
 Built with ❤️ by GinkoHub

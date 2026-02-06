@@ -1,5 +1,5 @@
-const express = require('express');
-const os = require('os');
+import express from 'express';
+import os from 'os';
 
 const router = express.Router();
 
@@ -21,4 +21,4 @@ router.get('/info', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

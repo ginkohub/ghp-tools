@@ -1,6 +1,6 @@
-const express = require('express');
-const multer = require('multer');
-const { Jimp } = require('jimp');
+import express from 'express';
+import multer from 'multer';
+import { Jimp } from 'jimp';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -53,4 +53,4 @@ router.post('/metadata', upload.single('image'), async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

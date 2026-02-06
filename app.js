@@ -1,7 +1,15 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import 'dotenv/config';
+
+import githubRoutes from './src/routes/github.js';
+import toolsRoutes from './src/routes/tools.js';
+import systemRoutes from './src/routes/system.js';
+import imagesRoutes from './src/routes/images.js';
+
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 const app = express();
 
@@ -15,35 +23,34 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
     res.json({
         status: 'online',
-        message: 'GinkoHub Tools API (CJS/Stable) is running',
+        message: 'GinkoHub Tools API (ESM/Vercel) is running',
         timestamp: new Date().toISOString()
     });
 });
 
-// Lazy load routes
-app.use('/api/v1/github', require('./src/routes/github.js'));
-app.use('/api/v1/tools', require('./src/routes/tools.js'));
-app.use('/api/v1/system', require('./src/routes/system.js'));
-app.use('/api/v1/images', require('./src/routes/images.js'));
+// Routes
+app.use('/api/v1/github', githubRoutes);
+app.use('/api/v1/tools', toolsRoutes);
+app.use('/api/v1/system', systemRoutes);
+app.use('/api/v1/images', imagesRoutes);
 
-// Swagger Docs (Lazy load to speed up startup)
+// Swagger Docs
+const options = {
+    definition: {
+        openapi: '3.0.0',
+        info: { title: 'GinkoHub Tools API', version: '1.0.0' },
+        servers: [{ url: '/api/v1' }],
+    },
+    apis: ['./src/routes/*.js'],
+};
+
+const swaggerSpec = swaggerJsdoc(options);
+
 app.get('/docs-json', (req, res) => {
-    const swaggerJsdoc = require('swagger-jsdoc');
-    const options = {
-        definition: {
-            openapi: '3.0.0',
-            info: { title: 'GinkoHub Tools API', version: '1.0.0' },
-            servers: [{ url: '/api/v1' }],
-        },
-        apis: ['./src/routes/*.js'],
-    };
-    res.json(swaggerJsdoc(options));
+    res.json(swaggerSpec);
 });
 
-const swaggerUi = require('swagger-ui-express');
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, {
-    swaggerOptions: { url: '/docs-json' }
-}));
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Error Handling
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
@@ -52,4 +59,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Server Error' });
 });
 
-module.exports = app;
+export default app;
