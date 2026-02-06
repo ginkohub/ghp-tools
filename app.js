@@ -36,10 +36,11 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Middleware
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable for Swagger UI to load correctly
+    contentSecurityPolicy: false,
 }));
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public')); // Serve static files from /public
 
 // Docs
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
