@@ -52,8 +52,8 @@ app.get('/', (req, res) => {
         message: 'GinkoHub Tools API (ESM) is running',
         docs: '/docs',
         config: {
-            port: process.env.PORT || 'Passenger managed',
-            host: process.env.HOST || 'Passenger managed'
+            environment: process.env.NODE_ENV || 'production',
+            managed_by: 'Phusion Passenger'
         },
         timestamp: new Date().toISOString()
     });
