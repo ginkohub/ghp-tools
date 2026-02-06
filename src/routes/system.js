@@ -1,5 +1,5 @@
-import express from 'express';
-import os from 'os';
+const express = require('express');
+const os = require('os');
 
 const router = express.Router();
 
@@ -8,10 +8,6 @@ const router = express.Router();
  * /system/info:
  *   get:
  *     summary: Get Server System Information
- *     description: Returns server platform, uptime, and memory usage details.
- *     responses:
- *       200:
- *         description: System information object
  */
 router.get('/info', (req, res) => {
     res.json({
@@ -25,4 +21,4 @@ router.get('/info', (req, res) => {
     });
 });
 
-export default router;
+module.exports = router;

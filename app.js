@@ -1,15 +1,15 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import 'dotenv/config';
-import swaggerUi from 'swagger-ui-express';
-import swaggerJsdoc from 'swagger-jsdoc';
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+require('dotenv').config();
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 // Route Imports
-import githubRoutes from './src/routes/github.js';
-import toolsRoutes from './src/routes/tools.js';
-import systemRoutes from './src/routes/system.js';
-import imageRoutes from './src/routes/images.js';
+const githubRoutes = require('./src/routes/github.js');
+const toolsRoutes = require('./src/routes/tools.js');
+const systemRoutes = require('./src/routes/system.js');
+const imageRoutes = require('./src/routes/images.js');
 
 const app = express();
 
@@ -40,7 +40,7 @@ app.use(helmet({
 }));
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Serve static files from /public
+app.use(express.static('public'));
 
 // Docs
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -49,7 +49,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/', (req, res) => {
     res.json({
         status: 'online',
-        message: 'GinkoHub Tools API (ESM) is running',
+        message: 'GinkoHub Tools API (CJS) is running',
         docs: '/docs',
         config: {
             environment: process.env.NODE_ENV || 'production',
@@ -76,4 +76,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error' });
 });
 
-export default app;
+module.exports = app;

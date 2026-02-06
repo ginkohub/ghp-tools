@@ -1,6 +1,6 @@
-import express from 'express';
-import QRCode from 'qrcode';
-import Parser from 'rss-parser';
+const express = require('express');
+const QRCode = require('qrcode');
+const Parser = require('rss-parser');
 
 const router = express.Router();
 const parser = new Parser();
@@ -10,10 +10,6 @@ const parser = new Parser();
  * /tools/ip:
  *   get:
  *     summary: Get Client IP Address
- *     description: Returns the public IP address of the requester.
- *     responses:
- *       200:
- *         description: IP address info
  */
 router.get('/ip', (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -25,17 +21,6 @@ router.get('/ip', (req, res) => {
  * /tools/qr:
  *   get:
  *     summary: Generate a QR Code
- *     description: Returns a Data URI for a QR code image based on the provided text.
- *     parameters:
- *       - in: query
- *         name: text
- *         required: true
- *         schema:
- *           type: string
- *         description: The text or URL to encode in the QR code.
- *     responses:
- *       200:
- *         description: QR Code generated successfully
  */
 router.get('/qr', async (req, res) => {
     try {
@@ -53,17 +38,6 @@ router.get('/qr', async (req, res) => {
  * /tools/rss:
  *   get:
  *     summary: Parse an RSS Feed
- *     description: Converts an RSS or Atom feed URL into a JSON object.
- *     parameters:
- *       - in: query
- *         name: url
- *         required: true
- *         schema:
- *           type: string
- *         description: The URL of the RSS/Atom feed.
- *     responses:
- *       200:
- *         description: Parsed feed data
  */
 router.get('/rss', async (req, res) => {
     try {
@@ -81,21 +55,6 @@ router.get('/rss', async (req, res) => {
  * /tools/base64:
  *   post:
  *     summary: Base64 Encode/Decode
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               action:
- *                 type: string
- *                 enum: [encode, decode]
- *               text:
- *                 type: string
- *     responses:
- *       200:
- *         description: Conversion result
  */
 router.post('/base64', (req, res) => {
     const { action, text } = req.body;
@@ -110,4 +69,4 @@ router.post('/base64', (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;

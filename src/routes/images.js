@@ -1,6 +1,6 @@
-import express from 'express';
-import multer from 'multer';
-import { Jimp } from 'jimp';
+const express = require('express');
+const multer = require('multer');
+const { Jimp } = require('jimp');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -10,22 +10,6 @@ const upload = multer({ storage: multer.memoryStorage() });
  * /images/convert:
  *   post:
  *     summary: Convert an image format (using Jimp)
- *     description: Upload an image and convert it. Supports PNG, JPEG, BMP.
- *     requestBody:
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               image:
- *                 type: string
- *                 format: binary
- *               format:
- *                 type: string
- *                 default: png
- *     responses:
- *       200:
- *         description: Converted image file
  */
 router.post('/convert', upload.single('image'), async (req, res) => {
     try {
@@ -45,7 +29,6 @@ router.post('/convert', upload.single('image'), async (req, res) => {
         const buffer = await image.getBuffer(mime);
         res.set('Content-Type', mime).send(buffer);
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: 'Conversion failed', details: error.message });
     }
 });
@@ -55,9 +38,6 @@ router.post('/convert', upload.single('image'), async (req, res) => {
  * /images/metadata:
  *   post:
  *     summary: Get image metadata
- *     responses:
- *       200:
- *         description: Metadata JSON object
  */
 router.post('/metadata', upload.single('image'), async (req, res) => {
     try {
@@ -73,4 +53,4 @@ router.post('/metadata', upload.single('image'), async (req, res) => {
     }
 });
 
-export default router;
+module.exports = router;

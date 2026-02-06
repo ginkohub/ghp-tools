@@ -1,6 +1,6 @@
-import express from 'express';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const router = express.Router();
 
@@ -9,38 +9,19 @@ const router = express.Router();
  * /github/repo/{owner}/{repo}:
  *   get:
  *     summary: Get GitHub repository statistics
- *     parameters:
- *       - in: path
- *         name: owner
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: repo
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Repository details
  */
 router.get('/repo/:owner/:repo', async (req, res) => {
     try {
         const { owner, repo } = req.params;
         const url = `https://github.com/${owner}/${repo}`;
-        
-        const { data } = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
-        
+        const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const $ = cheerio.load(data);
         const description = $('p.f4.my-3').text().trim();
         const stars = $('#repo-stars-counter-star').attr('title') || '0';
-        
         res.json({ owner, repo, description, stars: stars.replace(/,/g, ''), url });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch repo stats' });
     }
 });
 
-export default router;
+module.exports = router;
