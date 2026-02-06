@@ -7,6 +7,21 @@ const parser = new Parser();
 
 /**
  * @openapi
+ * /tools/ip:
+ *   get:
+ *     summary: Get Client IP Address
+ *     description: Returns the public IP address of the requester.
+ *     responses:
+ *       200:
+ *         description: IP address info
+ */
+router.get('/ip', (req, res) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    res.json({ ip: ip.split(',')[0].trim() });
+});
+
+/**
+ * @openapi
  * /tools/qr:
  *   get:
  *     summary: Generate a QR Code
