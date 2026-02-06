@@ -2,78 +2,54 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
-const swaggerUi = require('swagger-ui-express');
-const swaggerJsdoc = require('swagger-jsdoc');
-
-// Route Imports
-const githubRoutes = require('./src/routes/github.js');
-const toolsRoutes = require('./src/routes/tools.js');
-const systemRoutes = require('./src/routes/system.js');
-const imageRoutes = require('./src/routes/images.js');
 
 const app = express();
 
-// Swagger Config
-const swaggerOptions = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'GinkoHub Tools API',
-            version: '1.0.0',
-            description: 'API for GitHub Pages Tools, hosted on Serv00',
-        },
-        servers: [
-            {
-                url: '/api/v1',
-                description: 'API v1'
-            },
-        ],
-    },
-    apis: ['./src/routes/*.js'],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-
 // Middleware
-app.use(helmet({
-    contentSecurityPolicy: false,
-}));
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Docs
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Basic Health Check
+// Basic Health Check (Instant response)
 app.get('/', (req, res) => {
     res.json({
         status: 'online',
-        message: 'GinkoHub Tools API (CJS) is running',
-        docs: '/docs',
-        config: {
-            environment: process.env.NODE_ENV || 'production',
-            managed_by: 'Phusion Passenger'
-        },
+        message: 'GinkoHub Tools API (CJS/Stable) is running',
         timestamp: new Date().toISOString()
     });
 });
 
-// Routes
-app.use('/api/v1/github', githubRoutes);
-app.use('/api/v1/tools', toolsRoutes);
-app.use('/api/v1/system', systemRoutes);
-app.use('/api/v1/images', imageRoutes);
+// Lazy load routes
+app.use('/api/v1/github', require('./src/routes/github.js'));
+app.use('/api/v1/tools', require('./src/routes/tools.js'));
+app.use('/api/v1/system', require('./src/routes/system.js'));
+app.use('/api/v1/images', require('./src/routes/images.js'));
 
-// 404 Handler
-app.use((req, res) => {
-    res.status(404).json({ error: 'Endpoint not found' });
+// Swagger Docs (Lazy load to speed up startup)
+app.get('/docs-json', (req, res) => {
+    const swaggerJsdoc = require('swagger-jsdoc');
+    const options = {
+        definition: {
+            openapi: '3.0.0',
+            info: { title: 'GinkoHub Tools API', version: '1.0.0' },
+            servers: [{ url: '/api/v1' }],
+        },
+        apis: ['./src/routes/*.js'],
+    };
+    res.json(swaggerJsdoc(options));
 });
 
-// Error Handler
+const swaggerUi = require('swagger-ui-express');
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, {
+    swaggerOptions: { url: '/docs-json' }
+}));
+
+// Error Handling
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Server Error' });
 });
 
 module.exports = app;
