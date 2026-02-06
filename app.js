@@ -7,6 +7,7 @@ import githubRoutes from './src/routes/github.js';
 import toolsRoutes from './src/routes/tools.js';
 import systemRoutes from './src/routes/system.js';
 import imagesRoutes from './src/routes/images.js';
+import fetchRoutes from './src/routes/fetch.js';
 
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
@@ -33,6 +34,7 @@ app.use('/api/v1/github', githubRoutes);
 app.use('/api/v1/tools', toolsRoutes);
 app.use('/api/v1/system', systemRoutes);
 app.use('/api/v1/images', imagesRoutes);
+app.use('/api/v1/fetch', fetchRoutes);
 
 // Swagger Docs
 const options = {
