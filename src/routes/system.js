@@ -24,6 +24,21 @@ router.get('/info', (req, res) => {
 
 /**
  * @openapi
+ * /system/storage:
+ *   get:
+ *     summary: Check current storage engine
+ */
+router.get('/storage', (req, res) => {
+    const isRedis = !!process.env.UPSTASH_REDIS_REST_URL;
+    res.json({
+        engine: isRedis ? 'Upstash Redis (Persistent)' : 'In-Memory (Temporary)',
+        env_found: isRedis,
+        node_env: process.env.NODE_ENV
+    });
+});
+
+/**
+ * @openapi
  * /system/stats:
  *   get:
  *     summary: Get persistent API usage stats from Upstash
