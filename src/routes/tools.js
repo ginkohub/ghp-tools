@@ -230,7 +230,7 @@ router.post('/text-transform', async (req, res) => {
 /**
  * Native SVG Generator for the Hit Counter
  */
-const generateSVG = (label, count, theme = 'default') => {
+const generateSVG = (label, count, theme = 'default', customColor = null) => {
     const themes = {
         default: { bg: '#111', text: '#fff', accent: '#0ea5e9' },
         cyber: { bg: '#000', text: '#0ea5e9', accent: '#0ea5e9' },
@@ -239,6 +239,8 @@ const generateSVG = (label, count, theme = 'default') => {
     };
     
     const t = themes[theme] || themes.default;
+    const accentColor = customColor ? (customColor.startsWith('#') ? customColor : `#${customColor}`) : t.accent;
+
     const labelWidth = label.length * 7 + 20;
     const countWidth = count.toString().length * 8 + 20;
     const width = labelWidth + countWidth;
@@ -247,7 +249,7 @@ const generateSVG = (label, count, theme = 'default') => {
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="20">
         <rect width="${width}" height="20" rx="3" fill="${t.bg}"/>
         <rect width="${labelWidth}" height="20" rx="3" fill="${t.bg}"/>
-        <path d="M${labelWidth} 0h${countWidth}v20h-${countWidth}z" fill="${t.accent}"/>
+        <path d="M${labelWidth} 0h${countWidth}v20h-${countWidth}z" fill="${accentColor}"/>
         <g text-anchor="middle" font-family="JetBrains Mono,Verdana,Geneva,sans-serif" font-size="11">
             <text x="${labelWidth/2}" y="14" fill="${t.text}" font-weight="bold">${label.toUpperCase()}</text>
             <text x="${labelWidth + countWidth/2}" y="14" fill="${theme === 'flat' ? '#fff' : '#000'}" font-weight="bold">${count}</text>
@@ -259,11 +261,11 @@ const generateSVG = (label, count, theme = 'default') => {
  * @openapi
  * /tools/hit-counter/{id}:
  *   get:
- *     summary: The Ultimate Hit Counter (Supports SVG, IP Hashing, and Themes)
+ *     summary: The Ultimate Hit Counter (Supports SVG, IP Hashing, Themes, and Custom Colors)
  */
 router.get('/hit-counter/:id', async (req, res) => {
     const { id } = req.params;
-    const { format = 'json', label = 'hits', theme = 'default', uid, mode = 'total' } = req.query;
+    const { format = 'json', label = 'hits', theme = 'default', uid, mode = 'total', color } = req.query;
     
     try {
         const key = `counter:${id}`;
@@ -289,10 +291,10 @@ router.get('/hit-counter/:id', async (req, res) => {
         if (format === 'svg' || format === 'badge') {
             res.setHeader('Content-Type', 'image/svg+xml');
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-            return res.send(generateSVG(label, count, theme));
+            return res.send(generateSVG(label, count, theme, color));
         }
 
-        res.json({ id, count, mode, theme });
+        res.json({ id, count, mode, theme, color });
     } catch (error) {
         res.status(500).json({ error: 'Counter failed' });
     }
