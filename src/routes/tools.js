@@ -228,4 +228,41 @@ router.post('/text-transform', async (req, res) => {
     res.json({ result });
 });
 
+/**
+ * @openapi
+ * /tools/hit-counter/{id}:
+ *   get:
+ *     summary: Increment and get a hit counter for a specific ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: format
+ *         schema:
+ *           type: string
+ *           enum: [json, badge]
+ */
+router.get('/hit-counter/:id', async (req, res) => {
+    const { id } = req.params;
+    const { format = 'json', label = 'hits', color = 'blue' } = req.query;
+    
+    try {
+        const key = `counter:${id}`;
+        const count = await redis.incr(key);
+        await trackUsage('hit_counter');
+
+        if (format === 'badge') {
+            const badgeUrl = `https://img.shields.io/badge/${label}-${count}-${color}`;
+            return res.redirect(badgeUrl);
+        }
+
+        res.json({ id, count });
+    } catch (error) {
+        res.status(500).json({ error: 'Counter failed' });
+    }
+});
+
 export default router;
