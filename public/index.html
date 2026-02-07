@@ -120,8 +120,71 @@
         </div>
     </main>
 
+    <!-- Implementation Section -->
+    <section class="max-w-5xl mx-auto px-6 py-20">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold mb-4">Quick Integration</h2>
+            <p class="text-slate-400">Add the hit counter to your project in seconds.</p>
+        </div>
+
+        <div class="glass rounded-3xl overflow-hidden">
+            <div class="flex border-b border-slate-800">
+                <button onclick="switchTab('markdown')" id="tab-markdown" class="px-6 py-4 text-sm font-bold border-b-2 border-sky-400 text-sky-400">Markdown (Simple)</button>
+                <button onclick="switchTab('javascript')" id="tab-javascript" class="px-6 py-4 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white transition">JavaScript (Unique)</button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Markdown Tab -->
+                <div id="content-markdown" class="space-y-4">
+                    <p class="text-sm text-slate-400">Best for GitHub READMEs or simple sites. Just paste the image URL.</p>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 p-4 rounded-xl text-sm overflow-x-auto text-sky-300"><code>![Visitors](https://ghp-tools.vercel.app/api/tools/hit-counter/YOUR_SITE_ID?format=badge&color=blue)</code></pre>
+                        <button onclick="copyCode(this)" class="absolute right-3 top-3 bg-slate-800 hover:bg-slate-700 p-2 rounded-lg text-xs transition">Copy</button>
+                    </div>
+                </div>
+
+                <!-- JS Tab -->
+                <div id="content-javascript" class="hidden space-y-4">
+                    <p class="text-sm text-slate-400">Best for accurate unique visitor tracking using localStorage.</p>
+                    <div class="relative group">
+                        <pre class="bg-slate-900 p-4 rounded-xl text-sm overflow-x-auto text-emerald-300"><code>&lt;script&gt;
+  (async () => {
+    let uid = localStorage.getItem('ghp_visitor_id') || crypto.randomUUID();
+    localStorage.setItem('ghp_visitor_id', uid);
+    
+    const res = await fetch(`https://ghp-tools.vercel.app/api/tools/hit-counter/YOUR_SITE_ID?uid=${uid}`);
+    const data = await res.json();
+    console.log('Unique Visitors:', data.count);
+  })();
+&lt;/script&gt;</code></pre>
+                        <button onclick="copyCode(this)" class="absolute right-3 top-3 bg-slate-800 hover:bg-slate-700 p-2 rounded-lg text-xs transition">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function switchTab(tab) {
+            const isMd = tab === 'markdown';
+            document.getElementById('content-markdown').classList.toggle('hidden', !isMd);
+            document.getElementById('content-javascript').classList.toggle('hidden', isMd);
+            
+            document.getElementById('tab-markdown').className = isMd ? 'px-6 py-4 text-sm font-bold border-b-2 border-sky-400 text-sky-400' : 'px-6 py-4 text-sm font-bold border-b-2 border-transparent text-slate-400';
+            document.getElementById('tab-javascript').className = !isMd ? 'px-6 py-4 text-sm font-bold border-b-2 border-sky-400 text-sky-400' : 'px-6 py-4 text-sm font-bold border-b-2 border-transparent text-slate-400';
+        }
+
+        async function copyCode(btn) {
+            const code = btn.parentElement.querySelector('code').innerText;
+            await navigator.clipboard.writeText(code);
+            const originalText = btn.innerText;
+            btn.innerText = 'Copied!';
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+    </script>
+
     <footer class="py-10 border-t border-slate-800 text-center text-slate-500 text-sm">
-        <p>&copy; 2026 GinkoHub. Built with SvelteKit 5 + Node.js + Tailwind 4.</p>
+        <p>&copy; 2026 GinkoHub. Built with Node.js + Tailwind CSS + Upstash Redis.</p>
     </footer>
 </body>
 </html>
