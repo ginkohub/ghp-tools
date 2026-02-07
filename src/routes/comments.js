@@ -67,7 +67,9 @@ router.post('/:pageId', async (req, res) => {
             id: Math.random().toString(36).substring(2, 9),
             author: sanitizeHtml(author),
             content: cleanHtml,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            ups: 0,
+            downs: 0
         };
 
         // 3. Save to Redis (Maintain last 50 comments)
@@ -87,6 +89,52 @@ router.post('/:pageId', async (req, res) => {
     } catch (error) {
         console.error('Comment Error:', error);
         res.status(500).json({ error: 'Failed to post comment' });
+    }
+});
+
+/**
+ * @openapi
+ * /comments/{pageId}/{commentId}/vote:
+ *   post:
+ *     summary: Vote on a comment
+ */
+router.post('/:pageId/:commentId/vote', async (req, res) => {
+    const { pageId, commentId } = req.params;
+    const { type } = req.body; // 'up' or 'down'
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    if (!['up', 'down'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid vote type' });
+    }
+
+    try {
+        // Vote lock (1 vote per comment per IP per 24h)
+        const voteLockKey = `votelock:${commentId}:${ip.replace(/:/g, '_')}`;
+        const alreadyVoted = await db.get(voteLockKey);
+        if (alreadyVoted) {
+            return res.status(403).json({ error: 'Already voted on this comment' });
+        }
+
+        const comments = await db.get(`comments:${pageId}`) || [];
+        const comment = comments.find(c => c.id === commentId);
+
+        if (!comment) {
+            return res.status(404).json({ error: 'Comment not found' });
+        }
+
+        // Initialize ups/downs if they don't exist (migration for old comments)
+        if (comment.ups === undefined) comment.ups = 0;
+        if (comment.downs === undefined) comment.downs = 0;
+
+        if (type === 'up') comment.ups++;
+        else comment.downs++;
+
+        await db.set(`comments:${pageId}`, comments);
+        await db.set(voteLockKey, '1', { ex: 86400 });
+
+        res.json({ success: true, ups: comment.ups, downs: comment.downs });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to vote' });
     }
 });
 
