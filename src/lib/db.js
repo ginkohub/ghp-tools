@@ -2,8 +2,12 @@ import { Redis } from '@upstash/redis';
 
 let db;
 
+// Support both Upstash and Vercel KV prefixes
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
 // Check if we should use memory storage
-const isDev = process.env.NODE_ENV === 'development' || !process.env.UPSTASH_REDIS_REST_URL;
+const isDev = process.env.NODE_ENV === 'development' || !redisUrl;
 
 if (isDev) {
     console.log('--- STORAGE: IN-MEMORY MODE ACTIVE (Dev/No-Config) ---');
@@ -33,7 +37,10 @@ if (isDev) {
     };
 } else {
     console.log('--- STORAGE: UPSTASH REDIS ACTIVE (Production) ---');
-    const redis = Redis.fromEnv();
+    const redis = new Redis({
+        url: redisUrl,
+        token: redisToken,
+    });
     db = {
         get: async (key) => redis.get(key),
         set: async (key, value, options) => redis.set(key, value, options),
