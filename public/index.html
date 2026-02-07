@@ -104,32 +104,35 @@
             </div>
 
             <!-- Features -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 mb-32">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1 mb-32">
                 <!-- GitHub -->
                 <div class="panel p-8 group">
                     <div class="text-[10px] text-sky-500 font-bold mb-4">01 // GITHUB.SCRAPER</div>
-                    <h3 class="text-lg font-bold mb-4 uppercase italic">Repository Analytics</h3>
-                    <p class="text-white/40 text-xs mb-6 leading-relaxed">Extract stars, trending data, and profiles directly from the GitHub source.</p>
-                    <div class="text-[10px] text-white/20 font-bold italic">ENDPOINT: /api/github/trending</div>
+                    <h3 class="text-lg font-bold mb-4 uppercase italic">Repo Analytics</h3>
+                    <p class="text-white/40 text-[10px] mb-6 leading-relaxed">Extract stars, trending data, and profiles from GitHub source.</p>
                 </div>
                 <!-- Hit Counter -->
                 <div class="panel p-8">
                     <div class="text-[10px] text-sky-500 font-bold mb-4">02 // DATA.COUNTER</div>
                     <h3 class="text-lg font-bold mb-4 uppercase italic">Traffic Monitor</h3>
-                    <p class="text-white/40 text-xs mb-6 leading-relaxed">Persistent hit tracking with unique visitor validation and badge output.</p>
-                    <img src="/api/tools/hit-counter/dashboard?format=badge&color=sky&label=UPLINK+ACTIVE" class="grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-500" />
+                    <p class="text-white/40 text-[10px] mb-6 leading-relaxed">Persistent hit tracking with unique visitor validation.</p>
                 </div>
                 <!-- Tools -->
                 <div class="panel p-8">
                     <div class="text-[10px] text-sky-500 font-bold mb-4">03 // CORE.UTILS</div>
-                    <h3 class="text-lg font-bold mb-4 uppercase italic">Content Processor</h3>
-                    <p class="text-white/40 text-xs mb-6 leading-relaxed">Markdown parsing, base64 encoding, and system health monitoring.</p>
-                    <div class="text-[10px] text-white/20 font-bold italic">ENDPOINT: /api/tools/markdown</div>
+                    <h3 class="text-lg font-bold mb-4 uppercase italic">Processor</h3>
+                    <p class="text-white/40 text-[10px] mb-6 leading-relaxed">Markdown parsing, base64 encoding, and health monitoring.</p>
+                </div>
+                <!-- Comments -->
+                <div class="panel p-8">
+                    <div class="text-[10px] text-sky-500 font-bold mb-4">04 // SYSTEM.COMMENTS</div>
+                    <h3 class="text-lg font-bold mb-4 uppercase italic">Safe Feedback</h3>
+                    <p class="text-white/40 text-[10px] mb-6 leading-relaxed">Serverless Markdown comments with XSS sanitization.</p>
                 </div>
             </div>
 
             <!-- Implementation -->
-            <div class="max-w-3xl mx-auto" id="integration">
+            <div class="max-w-4xl mx-auto" id="integration">
                 <div class="flex items-center gap-4 mb-8">
                     <div class="h-[1px] flex-1 bg-white/10"></div>
                     <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-white/60">System Integration</h2>
@@ -138,16 +141,19 @@
 
                 <div class="panel bg-black/40">
                     <div class="flex border-b border-white/5">
-                        <button onclick="st('m')" id="t-m" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500">Markdown</button>
-                        <button onclick="st('j')" id="t-j" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition">JavaScript</button>
+                        <button onclick="st('m')" id="t-m" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500">Badge (MD)</button>
+                        <button onclick="st('j')" id="t-j" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition">Counter (JS)</button>
+                        <button onclick="st('c')" id="t-c" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition">Comments</button>
                     </div>
                     <div class="p-8">
+                        <!-- Markdown -->
                         <div id="c-m" class="space-y-4">
                             <div class="code-container p-6 relative group">
-                                <code class="text-xs text-sky-300/80 block break-all">![Hits](https://ghp-tools.vercel.app/api/tools/hit-counter/id?format=badge)</code>
+                                <code class="text-xs text-sky-300/80 block break-all">![Hits](https://ghp-tools.vercel.app/api/tools/hit-counter/id?format=svg&theme=cyber)</code>
                                 <button onclick="cp(this)" class="absolute right-4 top-4 text-[8px] font-bold uppercase text-white/20 hover:text-white">Copy_Code</button>
                             </div>
                         </div>
+                        <!-- JS Counter -->
                         <div id="c-j" class="hidden">
                             <div class="code-container p-6 relative group">
                                 <code class="text-xs text-sky-300/80 block whitespace-pre">const res = await fetch('/api/tools/hit-counter/id?uid=123');
@@ -155,16 +161,33 @@ const { count } = await res.json();</code>
                                 <button onclick="cp(this)" class="absolute right-4 top-4 text-[8px] font-bold uppercase text-white/20 hover:text-white">Copy_Code</button>
                             </div>
                         </div>
+                        <!-- Comments Integration -->
+                        <div id="c-c" class="hidden space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <div class="text-[8px] font-bold text-sky-500 uppercase">Fetch Data</div>
+                                    <div class="code-container p-4 relative">
+                                        <code class="text-[10px] text-sky-300/80 block whitespace-pre">GET /api/comments/page-1</code>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="text-[8px] font-bold text-sky-500 uppercase">Post Content</div>
+                                    <div class="code-container p-4 relative">
+                                        <code class="text-[10px] text-sky-300/80 block whitespace-pre">POST /api/comments/page-1</code>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="text-[8px] font-bold text-sky-500 uppercase">Voting System</div>
+                                <div class="code-container p-4 relative">
+                                    <code class="text-[10px] text-sky-300/80 block whitespace-pre">POST /api/comments/page-1/:id/vote { "type": "up" }</code>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            <!-- Comments -->
-            <div class="panel p-8">
-                <div class="text-[10px] text-sky-500 font-bold mb-4">04 // SYSTEM.COMMENTS</div>
-                <h3 class="text-lg font-bold mb-4 uppercase italic">Safe Comments</h3>
-                <p class="text-white/40 text-xs mb-6 leading-relaxed">Serverless Markdown comments with built-in XSS sanitization and rate limiting.</p>
-                <div class="text-[10px] text-white/20 font-bold italic">ENDPOINT: /api/comments/:id</div>
             </div>
-        </div>
+        </main>
 
         <footer class="py-20 border-t border-white/5 text-center">
             <div class="text-[10px] font-bold uppercase tracking-[0.5em] text-white/20">
@@ -174,23 +197,23 @@ const { count } = await res.json();</code>
     </div>
 
     <script>
-        // Spotlight Effect
         window.addEventListener('mousemove', e => {
             const s = document.getElementById('spotlight');
             s.style.setProperty('--x', e.clientX + 'px');
             s.style.setProperty('--y', e.clientY + 'px');
         });
 
-        // Tab Switcher
         function st(t) {
-            const m = t === 'm';
-            document.getElementById('c-m').classList.toggle('hidden', !m);
-            document.getElementById('c-j').classList.toggle('hidden', m);
-            document.getElementById('t-m').className = m ? 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500' : 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white';
-            document.getElementById('t-j').className = !m ? 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500' : 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white';
+            const tabs = ['m', 'j', 'c'];
+            tabs.forEach(tab => {
+                const isMatch = tab === t;
+                document.getElementById('c-' + tab).classList.toggle('hidden', !isMatch);
+                document.getElementById('t-' + tab).className = isMatch 
+                    ? 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500' 
+                    : 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition';
+            });
         }
 
-        // Copy Function
         async function cp(btn) {
             const code = btn.parentElement.querySelector('code').innerText;
             await navigator.clipboard.writeText(code);
