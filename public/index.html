@@ -1,156 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GinkoHub Tools — Developer Utilities</title>
+    <title>GinkoHub // Tools API</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #ffffff;
-            color: #111827;
-            -webkit-font-smoothing: antialiased;
+        :root {
+            --bg: #030303;
+            --accent: #0ea5e9;
+            --panel: #0a0a0a;
+            --border: #1a1a1a;
         }
-        .code-block { background-color: #f9fafb; border: 1px solid #e5e7eb; }
-        .card { border: 1px solid #f3f4f6; transition: border-color 0.2s ease; }
-        .card:hover { border-color: #d1d5db; }
-        .btn { transition: opacity 0.2s ease; }
-        .btn:hover { opacity: 0.9; }
+        body { 
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg);
+            color: #e2e8f0;
+            background-image: 
+                radial-gradient(circle at 2px 2px, #111 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(14, 165, 233, 0.02) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 10s linear infinite;
+        }
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+        .spotlight {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(14, 165, 233, 0.05) 0%, transparent 50%);
+            z-index: 1;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.2;
+        }
+        .code-container {
+            background: #000;
+            border-left: 2px solid var(--accent);
+        }
     </style>
 </head>
-<body class="selection:bg-blue-100 selection:text-blue-900">
+<body class="overflow-x-hidden selection:bg-sky-500/30">
+    <div class="scanline"></div>
+    <div class="spotlight" id="spotlight"></div>
 
-    <!-- Header -->
-    <nav class="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <span class="text-lg font-bold tracking-tight">GinkoHub <span class="text-blue-600 font-medium">Tools</span></span>
-        </div>
-        <div class="flex items-center gap-8">
-            <a href="/docs" class="text-sm font-medium text-gray-500 hover:text-black">Documentation</a>
-            <a href="/api/system/stats" class="text-sm font-medium text-gray-500 hover:text-black">API Stats</a>
-            <a href="https://github.com/ginkohub" class="text-gray-400 hover:text-black"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.008.069-.008 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" /></svg></a>
-        </div>
-    </nav>
+    <div class="relative z-10">
+        <!-- Header -->
+        <nav class="border-b border-white/5 bg-black/50 backdrop-blur-md sticky top-0">
+            <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-3 h-3 rounded-full bg-sky-500 shadow-[0_0_10px_#0ea5e9]"></div>
+                    <span class="font-bold tracking-widest uppercase text-sm">GinkoHub // <span class="text-sky-500">Tools</span></span>
+                </div>
+                <div class="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    <a href="/docs" class="hover:text-sky-400 transition">Docs</a>
+                    <a href="/api/system/stats" class="hover:text-sky-400 transition">Stats</a>
+                    <a href="https://github.com/ginkohub" class="hover:text-sky-400 transition">Git</a>
+                </div>
+            </div>
+        </nav>
 
-    <!-- Hero -->
-    <header class="max-w-3xl mx-auto px-6 py-24 text-center">
-        <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6">
-            Simple, reliable tools for your static sites.
-        </h1>
-        <p class="text-lg text-gray-500 mb-10 leading-relaxed">
-            A minimalist API collection providing hit counters, GitHub statistics, and content utilities. Built for speed and ease of integration.
-        </p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/docs" class="btn bg-gray-900 text-white px-6 py-3 rounded-md font-medium text-sm">Get Started</a>
-            <a href="#integration" class="btn bg-white text-gray-600 border border-gray-200 px-6 py-3 rounded-md font-medium text-sm hover:bg-gray-50">View Integration</a>
-        </div>
-    </header>
+        <!-- Main -->
+        <main class="max-w-6xl mx-auto px-6 py-20">
+            <!-- Hero -->
+            <div class="mb-32">
+                <div class="inline-block px-3 py-1 border border-sky-500/30 bg-sky-500/5 text-sky-400 text-[10px] font-bold uppercase tracking-widest mb-6">
+                    System Version: 1.2.0-Production
+                </div>
+                <h1 class="text-4xl md:text-6xl font-bold mb-8 tracking-tighter uppercase leading-none">
+                    Data Stream <br/><span class="text-sky-500">Utilities</span>
+                </h1>
+                <p class="text-white/40 max-w-xl text-sm leading-relaxed mb-10">
+                    High-performance serverless endpoints for tracking, scraping, and processing data. Optimized for GinkoHub integration.
+                </p>
+                <div class="flex gap-4">
+                    <a href="/docs" class="bg-sky-500 text-black px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-sky-400 transition">Initialize API</a>
+                    <div class="px-6 py-3 border border-white/10 text-white/60 text-xs font-bold uppercase tracking-widest">
+                        Status: Active
+                    </div>
+                </div>
+            </div>
 
-    <!-- Stats -->
-    <div class="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-gray-100 mb-24">
-        <div class="text-center">
-            <p class="text-2xl font-semibold text-gray-900">100%</p>
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mt-1">Uptime</p>
-        </div>
-        <div class="text-center">
-            <p class="text-2xl font-semibold text-gray-900">&lt;50ms</p>
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mt-1">Latency</p>
-        </div>
-        <div class="text-center">
-            <p class="text-2xl font-semibold text-gray-900">Global</p>
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mt-1">Edge Nodes</p>
-        </div>
-        <div class="text-center">
-            <p class="text-2xl font-semibold text-gray-900">OSS</p>
-            <p class="text-xs font-medium text-gray-400 uppercase tracking-widest mt-1">MIT License</p>
-        </div>
+            <!-- Features -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 mb-32">
+                <!-- GitHub -->
+                <div class="panel p-8 group">
+                    <div class="text-[10px] text-sky-500 font-bold mb-4">01 // GITHUB.SCRAPER</div>
+                    <h3 class="text-lg font-bold mb-4 uppercase italic">Repository Analytics</h3>
+                    <p class="text-white/40 text-xs mb-6 leading-relaxed">Extract stars, trending data, and profiles directly from the GitHub source.</p>
+                    <div class="text-[10px] text-white/20 font-bold italic">ENDPOINT: /api/github/trending</div>
+                </div>
+                <!-- Hit Counter -->
+                <div class="panel p-8">
+                    <div class="text-[10px] text-sky-500 font-bold mb-4">02 // DATA.COUNTER</div>
+                    <h3 class="text-lg font-bold mb-4 uppercase italic">Traffic Monitor</h3>
+                    <p class="text-white/40 text-xs mb-6 leading-relaxed">Persistent hit tracking with unique visitor validation and badge output.</p>
+                    <img src="/api/tools/hit-counter/dashboard?format=badge&color=sky&label=UPLINK+ACTIVE" class="grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-500" />
+                </div>
+                <!-- Tools -->
+                <div class="panel p-8">
+                    <div class="text-[10px] text-sky-500 font-bold mb-4">03 // CORE.UTILS</div>
+                    <h3 class="text-lg font-bold mb-4 uppercase italic">Content Processor</h3>
+                    <p class="text-white/40 text-xs mb-6 leading-relaxed">Markdown parsing, base64 encoding, and system health monitoring.</p>
+                    <div class="text-[10px] text-white/20 font-bold italic">ENDPOINT: /api/tools/markdown</div>
+                </div>
+            </div>
+
+            <!-- Implementation -->
+            <div class="max-w-3xl mx-auto" id="integration">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="h-[1px] flex-1 bg-white/10"></div>
+                    <h2 class="text-xs font-bold uppercase tracking-[0.3em] text-white/60">System Integration</h2>
+                    <div class="h-[1px] flex-1 bg-white/10"></div>
+                </div>
+
+                <div class="panel bg-black/40">
+                    <div class="flex border-b border-white/5">
+                        <button onclick="st('m')" id="t-m" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500">Markdown</button>
+                        <button onclick="st('j')" id="t-j" class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white transition">JavaScript</button>
+                    </div>
+                    <div class="p-8">
+                        <div id="c-m" class="space-y-4">
+                            <div class="code-container p-6 relative group">
+                                <code class="text-xs text-sky-300/80 block break-all">![Hits](https://ghp-tools.vercel.app/api/tools/hit-counter/id?format=badge)</code>
+                                <button onclick="cp(this)" class="absolute right-4 top-4 text-[8px] font-bold uppercase text-white/20 hover:text-white">Copy_Code</button>
+                            </div>
+                        </div>
+                        <div id="c-j" class="hidden">
+                            <div class="code-container p-6 relative group">
+                                <code class="text-xs text-sky-300/80 block whitespace-pre">const res = await fetch('/api/tools/hit-counter/id?uid=123');
+const { count } = await res.json();</code>
+                                <button onclick="cp(this)" class="absolute right-4 top-4 text-[8px] font-bold uppercase text-white/20 hover:text-white">Copy_Code</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="py-20 border-t border-white/5 text-center">
+            <div class="text-[10px] font-bold uppercase tracking-[0.5em] text-white/20">
+                &copy; 2026 GinkoHub // Persistent Tools Node
+            </div>
+        </footer>
     </div>
 
-    <!-- Features -->
-    <section class="max-w-5xl mx-auto px-6 mb-32">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div>
-                <h3 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">GitHub</h3>
-                <h4 class="text-xl font-bold mb-4">Repository Analytics</h4>
-                <p class="text-gray-500 text-sm leading-relaxed">
-                    Fetch real-time data for repositories, users, and trending projects without complex OAuth setups.
-                </p>
-            </div>
-            <div>
-                <h3 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Persistence</h3>
-                <h4 class="text-xl font-bold mb-4">Visitor Tracking</h4>
-                <p class="text-gray-500 text-sm leading-relaxed">
-                    A flat hit-counter API with badge support. Track total hits or unique visitors with simple query parameters.
-                </p>
-            </div>
-            <div>
-                <h3 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4">Utility</h3>
-                <h4 class="text-xl font-bold mb-4">Content Tools</h4>
-                <p class="text-gray-500 text-sm leading-relaxed">
-                    Markdown to HTML conversion, JSON validation, and image utilities available through a single endpoint.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Integration -->
-    <section id="integration" class="max-w-5xl mx-auto px-6 py-24 bg-gray-50 rounded-2xl mb-32">
-        <div class="max-w-2xl mx-auto">
-            <h2 class="text-2xl font-bold text-center mb-12">Elegant Integration</h2>
-            
-            <div class="flex justify-center gap-4 mb-8">
-                <button onclick="switchTab('markdown')" id="tab-markdown" class="text-sm font-semibold text-blue-600 border-b-2 border-blue-600 pb-1">Markdown</button>
-                <button onclick="switchTab('javascript')" id="tab-javascript" class="text-sm font-semibold text-gray-400 hover:text-gray-900 pb-1 border-b-2 border-transparent">JavaScript</button>
-            </div>
-
-            <div id="content-markdown" class="space-y-4">
-                <div class="relative group">
-                    <pre class="code-block p-6 rounded-lg text-sm overflow-x-auto text-gray-700"><code>![Hits](https://ghp-tools.vercel.app/api/tools/hit-counter/site-id?format=badge)</code></pre>
-                    <button onclick="copyCode(this)" class="absolute right-4 top-4 text-xs font-medium text-gray-400 hover:text-gray-900">Copy</button>
-                </div>
-                <div class="flex items-center gap-3 pt-4">
-                    <span class="text-xs font-medium text-gray-400 uppercase tracking-widest">Preview</span>
-                    <img src="/api/tools/hit-counter/demo?format=badge&label=visitors&color=gray" alt="Preview">
-                </div>
-            </div>
-
-            <div id="content-javascript" class="hidden space-y-4">
-                <div class="relative group">
-                    <pre class="code-block p-6 rounded-lg text-sm overflow-x-auto text-gray-700"><code>const res = await fetch('https://ghp-tools.vercel.app/api/tools/hit-counter/id?uid=user-123');
-const { count } = await res.json();</code></pre>
-                    <button onclick="copyCode(this)" class="absolute right-4 top-4 text-xs font-medium text-gray-400 hover:text-gray-900">Copy</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="max-w-5xl mx-auto px-6 py-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-        <span class="text-sm text-gray-400">&copy; 2026 GinkoHub. All rights reserved.</span>
-        <div class="flex gap-8">
-            <a href="/docs" class="text-sm text-gray-400 hover:text-gray-900">Documentation</a>
-            <a href="/api/system/stats" class="text-sm text-gray-400 hover:text-gray-900">System Stats</a>
-            <a href="https://github.com/ginkohub" class="text-sm text-gray-400 hover:text-gray-900">GitHub</a>
-        </div>
-    </footer>
-
     <script>
-        function switchTab(tab) {
-            const isMd = tab === 'markdown';
-            document.getElementById('content-markdown').classList.toggle('hidden', !isMd);
-            document.getElementById('content-javascript').classList.toggle('hidden', isMd);
-            
-            document.getElementById('tab-markdown').className = isMd ? 'text-sm font-semibold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-sm font-semibold text-gray-400 hover:text-gray-900 pb-1 border-b-2 border-transparent';
-            document.getElementById('tab-javascript').className = !isMd ? 'text-sm font-semibold text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-sm font-semibold text-gray-400 hover:text-gray-900 pb-1 border-b-2 border-transparent';
+        // Spotlight Effect
+        window.addEventListener('mousemove', e => {
+            const s = document.getElementById('spotlight');
+            s.style.setProperty('--x', e.clientX + 'px');
+            s.style.setProperty('--y', e.clientY + 'px');
+        });
+
+        // Tab Switcher
+        function st(t) {
+            const m = t === 'm';
+            document.getElementById('c-m').classList.toggle('hidden', !m);
+            document.getElementById('c-j').classList.toggle('hidden', m);
+            document.getElementById('t-m').className = m ? 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500' : 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white';
+            document.getElementById('t-j').className = !m ? 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-sky-500 border-b-2 border-sky-500' : 'px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white';
         }
 
-        async function copyCode(btn) {
+        // Copy Function
+        async function cp(btn) {
             const code = btn.parentElement.querySelector('code').innerText;
             await navigator.clipboard.writeText(code);
             const originalText = btn.innerText;
-            btn.innerText = 'Copied';
+            btn.innerText = 'Copied_';
             setTimeout(() => btn.innerText = originalText, 2000);
         }
     </script>
