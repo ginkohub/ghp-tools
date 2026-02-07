@@ -29,7 +29,7 @@ router.get('/info', (req, res) => {
  *     summary: Check current storage engine
  */
 router.get('/storage', (req, res) => {
-    const isRedis = !!process.env.UPSTASH_REDIS_REST_URL;
+    const isRedis = !!(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL);
     res.json({
         engine: isRedis ? 'Upstash Redis (Persistent)' : 'In-Memory (Temporary)',
         env_found: isRedis,
