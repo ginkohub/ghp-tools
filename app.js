@@ -31,18 +31,27 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-app.use('/api/v1/github', githubRoutes);
-app.use('/api/v1/tools', toolsRoutes);
-app.use('/api/v1/system', systemRoutes);
-app.use('/api/v1/images', imagesRoutes);
-app.use('/api/v1/fetch', fetchRoutes);
+const mountRoutes = (prefix) => {
+    app.use(`${prefix}/github`, githubRoutes);
+    app.use(`${prefix}/tools`, toolsRoutes);
+    app.use(`${prefix}/system`, systemRoutes);
+    app.use(`${prefix}/images`, imagesRoutes);
+    app.use(`${prefix}/fetch`, fetchRoutes);
+};
+
+// Mount both versions
+mountRoutes('/api/v1');
+mountRoutes('/api');
 
 // Swagger Docs
 const options = {
     definition: {
         openapi: '3.0.0',
         info: { title: 'GinkoHub Tools API', version: '1.0.0' },
-        servers: [{ url: '/api/v1' }],
+        servers: [
+            { url: '/api', description: 'Main API' },
+            { url: '/api/v1', description: 'Version 1' }
+        ],
     },
     apis: ['./src/routes/*.js'],
 };
