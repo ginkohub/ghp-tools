@@ -229,53 +229,71 @@ router.post('/text-transform', async (req, res) => {
 });
 
 /**
+ * Native SVG Generator for the Hit Counter
+ */
+const generateSVG = (label, count, theme = 'default') => {
+    const themes = {
+        default: { bg: '#111', text: '#fff', accent: '#0ea5e9' },
+        cyber: { bg: '#000', text: '#0ea5e9', accent: '#0ea5e9' },
+        flat: { bg: '#f3f4f6', text: '#1f2937', accent: '#3b82f6' },
+        minimal: { bg: 'transparent', text: '#fff', accent: '#fff' }
+    };
+    
+    const t = themes[theme] || themes.default;
+    const labelWidth = label.length * 7 + 20;
+    const countWidth = count.toString().length * 8 + 20;
+    const width = labelWidth + countWidth;
+
+    return `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="20">
+        <rect width="${width}" height="20" rx="3" fill="${t.bg}"/>
+        <rect width="${labelWidth}" height="20" rx="3" fill="${t.bg}"/>
+        <path d="M${labelWidth} 0h${countWidth}v20h-${countWidth}z" fill="${t.accent}"/>
+        <g text-anchor="middle" font-family="JetBrains Mono,Verdana,Geneva,sans-serif" font-size="11">
+            <text x="${labelWidth/2}" y="14" fill="${t.text}" font-weight="bold">${label.toUpperCase()}</text>
+            <text x="${labelWidth + countWidth/2}" y="14" fill="${theme === 'flat' ? '#fff' : '#000'}" font-weight="bold">${count}</text>
+        </g>
+    </svg>`;
+};
+
+/**
  * @openapi
  * /tools/hit-counter/{id}:
  *   get:
- *     summary: Increment and get a hit counter for a specific ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *       - in: query
- *         name: format
- *         schema:
- *           type: string
- *           enum: [json, badge]
+ *     summary: The Ultimate Hit Counter (Supports SVG, IP Hashing, and Themes)
  */
 router.get('/hit-counter/:id', async (req, res) => {
     const { id } = req.params;
-    const { format = 'json', label = 'hits', color = 'blue', uid } = req.query;
+    const { format = 'json', label = 'hits', theme = 'default', uid, mode = 'total' } = req.query;
     
     try {
         const key = `counter:${id}`;
-        let count;
+        let visitorId = uid;
 
-        if (uid) {
-            // User-specified uniqueness (e.g. visitor UUID or fingerprint)
-            const lockKey = `lock:${id}:${uid}`;
-            const isNewVisitor = await redis.set(lockKey, '1', { nx: true, ex: 86400 });
-            
-            if (isNewVisitor) {
-                count = await redis.incr(key);
-            } else {
-                count = await redis.get(key) || 0;
-            }
+        // Auto-Unique via IP Hashing if no UID and mode is unique
+        if (!visitorId && mode === 'unique') {
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            visitorId = Buffer.from(ip).toString('base64').substring(0, 16);
+        }
+
+        let count;
+        if (visitorId) {
+            const lockKey = `lock:${id}:${visitorId}`;
+            const isNew = await redis.set(lockKey, '1', { nx: true, ex: 86400 });
+            count = isNew ? await redis.incr(key) : (await redis.get(key) || 0);
         } else {
-            // Simple hit counter
             count = await redis.incr(key);
         }
 
         await trackUsage('hit_counter');
 
-        if (format === 'badge') {
-            const badgeUrl = `https://img.shields.io/badge/${label}-${count}-${color}`;
-            return res.redirect(badgeUrl);
+        if (format === 'svg' || format === 'badge') {
+            res.setHeader('Content-Type', 'image/svg+xml');
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            return res.send(generateSVG(label, count, theme));
         }
 
-        res.json({ id, count, unique: !!uid });
+        res.json({ id, count, mode, theme });
     } catch (error) {
         res.status(500).json({ error: 'Counter failed' });
     }
