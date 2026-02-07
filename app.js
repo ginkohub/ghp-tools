@@ -8,6 +8,7 @@ import toolsRoutes from './src/routes/tools.js';
 import systemRoutes from './src/routes/system.js';
 import imagesRoutes from './src/routes/images.js';
 import fetchRoutes from './src/routes/fetch.js';
+import commentRoutes from './src/routes/comments.js';
 
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
@@ -37,6 +38,7 @@ const mountRoutes = (prefix) => {
     app.use(`${prefix}/system`, systemRoutes);
     app.use(`${prefix}/images`, imagesRoutes);
     app.use(`${prefix}/fetch`, fetchRoutes);
+    app.use(`${prefix}/comments`, commentRoutes);
 };
 
 // Mount both versions
