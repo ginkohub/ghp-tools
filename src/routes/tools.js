@@ -247,11 +247,27 @@ router.post('/text-transform', async (req, res) => {
  */
 router.get('/hit-counter/:id', async (req, res) => {
     const { id } = req.params;
-    const { format = 'json', label = 'hits', color = 'blue' } = req.query;
+    const { format = 'json', label = 'hits', color = 'blue', uid } = req.query;
     
     try {
         const key = `counter:${id}`;
-        const count = await redis.incr(key);
+        let count;
+
+        if (uid) {
+            // User-specified uniqueness (e.g. visitor UUID or fingerprint)
+            const lockKey = `lock:${id}:${uid}`;
+            const isNewVisitor = await redis.set(lockKey, '1', { nx: true, ex: 86400 });
+            
+            if (isNewVisitor) {
+                count = await redis.incr(key);
+            } else {
+                count = await redis.get(key) || 0;
+            }
+        } else {
+            // Simple hit counter
+            count = await redis.incr(key);
+        }
+
         await trackUsage('hit_counter');
 
         if (format === 'badge') {
@@ -259,7 +275,7 @@ router.get('/hit-counter/:id', async (req, res) => {
             return res.redirect(badgeUrl);
         }
 
-        res.json({ id, count });
+        res.json({ id, count, unique: !!uid });
     } catch (error) {
         res.status(500).json({ error: 'Counter failed' });
     }
