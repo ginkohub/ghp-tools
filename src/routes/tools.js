@@ -2,19 +2,18 @@ import express from 'express';
 import QRCode from 'qrcode';
 import Parser from 'rss-parser';
 import { marked } from 'marked';
-import { Redis } from '@upstash/redis';
+import db from '../lib/db.js';
 
 const router = express.Router();
 const parser = new Parser();
-const redis = Redis.fromEnv();
 
 /**
  * Helper to increment global usage counter
  */
 const trackUsage = async (tool) => {
     try {
-        await redis.incr(`usage:tools:${tool}`);
-        await redis.incr('usage:total');
+        await db.incr(`usage:tools:${tool}`);
+        await db.incr('usage:total');
     } catch (e) {
         // Silently fail in dev if KV not configured
     }

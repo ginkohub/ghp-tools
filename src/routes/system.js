@@ -1,9 +1,8 @@
 import express from 'express';
 import os from 'os';
-import { Redis } from '@upstash/redis';
+import db from '../lib/db.js';
 
 const router = express.Router();
-const redis = Redis.fromEnv();
 
 /**
  * @openapi
@@ -32,11 +31,11 @@ router.get('/info', (req, res) => {
 router.get('/stats', async (req, res) => {
     try {
         // Fetch all usage keys
-        const keys = await redis.keys('usage:*');
+        const keys = await db.keys('usage:*');
         const stats = {};
         
         for (const key of keys) {
-            const val = await redis.get(key);
+            const val = await db.get(key);
             stats[key.replace('usage:', '')] = val || 0;
         }
         

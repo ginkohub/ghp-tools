@@ -1,18 +1,17 @@
 import express from 'express';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { Redis } from '@upstash/redis';
+import db from '../lib/db.js';
 
 const router = express.Router();
-const redis = Redis.fromEnv();
 
 /**
  * Helper to increment global usage counter
  */
 const incrementUsage = async (type) => {
     try {
-        await redis.incr(`usage:github:${type}`);
-        await redis.incr('usage:total');
+        await db.incr(`usage:github:${type}`);
+        await db.incr('usage:total');
     } catch (e) {}
 };
 
@@ -28,7 +27,7 @@ router.get('/repo/:owner/:repo', async (req, res) => {
         const cacheKey = `repo:${owner}:${repo}`;
         
         try {
-            const cached = await redis.get(cacheKey);
+            const cached = await db.get(cacheKey);
             if (cached) return res.json({ ...cached, cached: true });
         } catch (e) {}
 
@@ -41,7 +40,7 @@ router.get('/repo/:owner/:repo', async (req, res) => {
         const result = { owner, repo, description, stars: stars.replace(/,/g, ''), url };
         
         try {
-            await redis.set(cacheKey, result, { ex: 7200 });
+            await db.set(cacheKey, result, { ex: 7200 });
             await incrementUsage('repo');
         } catch (e) {}
 
@@ -64,7 +63,7 @@ router.get('/trending', async (req, res) => {
         const cacheKey = `trending:repos:${language || 'all'}:${since}`;
 
         try {
-            const cached = await redis.get(cacheKey);
+            const cached = await db.get(cacheKey);
             if (cached) return res.json(cached);
         } catch (e) {}
 
@@ -103,7 +102,7 @@ router.get('/trending', async (req, res) => {
         });
 
         try {
-            await redis.set(cacheKey, repos, { ex: 3600 });
+            await db.set(cacheKey, repos, { ex: 3600 });
             await incrementUsage('trending');
         } catch (e) {}
 
@@ -126,7 +125,7 @@ router.get('/trending/developers', async (req, res) => {
         const cacheKey = `trending:devs:${language || 'all'}:${since}`;
 
         try {
-            const cached = await redis.get(cacheKey);
+            const cached = await db.get(cacheKey);
             if (cached) return res.json(cached);
         } catch (e) {}
 
@@ -160,7 +159,7 @@ router.get('/trending/developers', async (req, res) => {
         });
 
         try {
-            await redis.set(cacheKey, developers, { ex: 3600 });
+            await db.set(cacheKey, developers, { ex: 3600 });
             await incrementUsage('trending_devs');
         } catch (e) {}
 
@@ -182,7 +181,7 @@ router.get('/user/:username', async (req, res) => {
         const cacheKey = `user:${username}`;
 
         try {
-            const cached = await redis.get(cacheKey);
+            const cached = await db.get(cacheKey);
             if (cached) return res.json({ ...cached, cached: true });
         } catch (e) {}
 
@@ -213,7 +212,7 @@ router.get('/user/:username', async (req, res) => {
         };
 
         try {
-            await redis.set(cacheKey, result, { ex: 14400 });
+            await db.set(cacheKey, result, { ex: 14400 });
             await incrementUsage('user');
         } catch (e) {}
 
@@ -240,7 +239,7 @@ router.get('/stats', async (req, res) => {
         ];
         const stats = {};
         for (const key of keys) {
-            stats[key.replace('usage:', '')] = await redis.get(key) || 0;
+            stats[key.replace('usage:', '')] = await db.get(key) || 0;
         }
         res.json(stats);
     } catch (error) {
