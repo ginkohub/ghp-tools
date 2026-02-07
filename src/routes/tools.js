@@ -2,9 +2,23 @@ import express from 'express';
 import QRCode from 'qrcode';
 import Parser from 'rss-parser';
 import { marked } from 'marked';
+import { Redis } from '@upstash/redis';
 
 const router = express.Router();
 const parser = new Parser();
+const redis = Redis.fromEnv();
+
+/**
+ * Helper to increment global usage counter
+ */
+const trackUsage = async (tool) => {
+    try {
+        await redis.incr(`usage:tools:${tool}`);
+        await redis.incr('usage:total');
+    } catch (e) {
+        // Silently fail in dev if KV not configured
+    }
+};
 
 /**
  * @openapi
@@ -12,8 +26,9 @@ const parser = new Parser();
  *   get:
  *     summary: Get Client IP Address
  */
-router.get('/ip', (req, res) => {
+router.get('/ip', async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    await trackUsage('ip');
     res.json({ ip: ip.split(',')[0].trim() });
 });
 
@@ -28,6 +43,7 @@ router.get('/qr', async (req, res) => {
         const { text } = req.query;
         if (!text) return res.status(400).json({ error: 'Missing text' });
         const qrDataUrl = await QRCode.toDataURL(text);
+        await trackUsage('qr');
         res.json({ qr_code: qrDataUrl });
     } catch (error) {
         res.status(500).json({ error: 'QR generation failed' });
@@ -45,6 +61,7 @@ router.get('/rss', async (req, res) => {
         const { url } = req.query;
         if (!url) return res.status(400).json({ error: 'Missing url' });
         const feed = await parser.parseURL(url);
+        await trackUsage('rss');
         res.json(feed);
     } catch (error) {
         res.status(500).json({ error: 'RSS parsing failed' });
@@ -57,13 +74,14 @@ router.get('/rss', async (req, res) => {
  *   post:
  *     summary: Base64 Encode/Decode
  */
-router.post('/base64', (req, res) => {
+router.post('/base64', async (req, res) => {
     const { action, text } = req.body;
     if (!text || !action) return res.status(400).json({ error: 'Missing text or action' });
     try {
         let result = action === 'encode' 
             ? Buffer.from(text).toString('base64') 
             : Buffer.from(text, 'base64').toString('utf-8');
+        await trackUsage('base64');
         res.json({ result });
     } catch (error) {
         res.status(400).json({ error: 'Conversion failed' });
@@ -76,11 +94,12 @@ router.post('/base64', (req, res) => {
  *   post:
  *     summary: Convert Markdown to HTML
  */
-router.post('/markdown', (req, res) => {
+router.post('/markdown', async (req, res) => {
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'Missing content' });
     try {
         const html = marked.parse(content);
+        await trackUsage('markdown');
         res.json({ html });
     } catch (error) {
         res.status(500).json({ error: 'Markdown parsing failed' });
@@ -93,13 +112,14 @@ router.post('/markdown', (req, res) => {
  *   get:
  *     summary: Generate a random password
  */
-router.get('/password', (req, res) => {
+router.get('/password', async (req, res) => {
     const length = parseInt(req.query.length) || 16;
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";  
     let password = "";
     for (let i = 0, n = charset.length; i < length; ++i) {
         password += charset.charAt(Math.floor(Math.random() * n));
     }
+    await trackUsage('password');
     res.json({ password });
 });
 
@@ -109,11 +129,12 @@ router.get('/password', (req, res) => {
  *   post:
  *     summary: Validate and format JSON
  */
-router.post('/json-validate', (req, res) => {
+router.post('/json-validate', async (req, res) => {
     const { json } = req.body;
     if (!json) return res.status(400).json({ error: 'Missing json string' });
     try {
         const parsed = typeof json === 'string' ? JSON.parse(json) : json;
+        await trackUsage('json');
         res.json({ 
             valid: true, 
             formatted: JSON.stringify(parsed, null, 4) 
@@ -129,7 +150,7 @@ router.post('/json-validate', (req, res) => {
  *   get:
  *     summary: Basic unit converter (temp, length, weight)
  */
-router.get('/convert-unit', (req, res) => {
+router.get('/convert-unit', async (req, res) => {
     const { value, from, to, type } = req.query;
     const v = parseFloat(value);
     if (isNaN(v)) return res.status(400).json({ error: 'Invalid value' });
@@ -150,6 +171,7 @@ router.get('/convert-unit', (req, res) => {
         }
 
         if (result === undefined) throw new Error('Unsupported conversion');
+        await trackUsage('unit_converter');
         res.json({ result: parseFloat(result.toFixed(4)) });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -162,11 +184,12 @@ router.get('/convert-unit', (req, res) => {
  *   post:
  *     summary: Get text statistics (word count, etc.)
  */
-router.post('/text-stats', (req, res) => {
+router.post('/text-stats', async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Missing text' });
     
     const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+    await trackUsage('text_stats');
     res.json({
         characters: text.length,
         charactersNoSpaces: text.replace(/\s/g, '').length,
@@ -182,7 +205,7 @@ router.post('/text-stats', (req, res) => {
  *   post:
  *     summary: Transform text (uppercase, lowercase, slugify)
  */
-router.post('/text-transform', (req, res) => {
+router.post('/text-transform', async (req, res) => {
     const { text, type } = req.body;
     if (!text || !type) return res.status(400).json({ error: 'Missing text or type' });
     
@@ -201,6 +224,7 @@ router.post('/text-transform', (req, res) => {
         case 'reverse': result = text.split('').reverse().join(''); break;
         default: return res.status(400).json({ error: 'Invalid type' });
     }
+    await trackUsage('text_transform');
     res.json({ result });
 });
 

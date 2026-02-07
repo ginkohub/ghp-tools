@@ -1,8 +1,20 @@
 import express from 'express';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { Redis } from '@upstash/redis';
 
 const router = express.Router();
+const redis = Redis.fromEnv();
+
+/**
+ * Helper to increment global usage counter
+ */
+const incrementUsage = async (type) => {
+    try {
+        await redis.incr(`usage:github:${type}`);
+        await redis.incr('usage:total');
+    } catch (e) {}
+};
 
 /**
  * @openapi
@@ -13,12 +25,27 @@ const router = express.Router();
 router.get('/repo/:owner/:repo', async (req, res) => {
     try {
         const { owner, repo } = req.params;
+        const cacheKey = `repo:${owner}:${repo}`;
+        
+        try {
+            const cached = await redis.get(cacheKey);
+            if (cached) return res.json({ ...cached, cached: true });
+        } catch (e) {}
+
         const url = `https://github.com/${owner}/${repo}`;
         const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         const $ = cheerio.load(data);
         const description = $('p.f4.my-3').text().trim();
         const stars = $('#repo-stars-counter-star').attr('title') || '0';
-        res.json({ owner, repo, description, stars: stars.replace(/,/g, ''), url });
+        
+        const result = { owner, repo, description, stars: stars.replace(/,/g, ''), url };
+        
+        try {
+            await redis.set(cacheKey, result, { ex: 7200 });
+            await incrementUsage('repo');
+        } catch (e) {}
+
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch repo stats' });
     }
@@ -29,24 +56,19 @@ router.get('/repo/:owner/:repo', async (req, res) => {
  * /github/trending:
  *   get:
  *     summary: Get GitHub trending repositories
- *     parameters:
- *       - in: query
- *         name: language
- *         schema:
- *           type: string
- *         description: Programming language (e.g., javascript)
- *       - in: query
- *         name: since
- *         schema:
- *           type: string
- *           enum: [daily, weekly, monthly]
  */
 router.get('/trending', async (req, res) => {
     try {
         const { language, since = 'daily' } = req.query;
         const langPath = language ? `/${language}` : '';
+        const cacheKey = `trending:repos:${language || 'all'}:${since}`;
+
+        try {
+            const cached = await redis.get(cacheKey);
+            if (cached) return res.json(cached);
+        } catch (e) {}
+
         const url = `https://github.com/trending${langPath}?since=${since}`;
-        
         const { data } = await axios.get(url, { 
             headers: { 
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -80,9 +102,13 @@ router.get('/trending', async (req, res) => {
             });
         });
 
+        try {
+            await redis.set(cacheKey, repos, { ex: 3600 });
+            await incrementUsage('trending');
+        } catch (e) {}
+
         res.json(repos);
     } catch (error) {
-        console.error('Trending Error:', error.message);
         res.status(500).json({ error: 'Failed to fetch trending repos' });
     }
 });
@@ -97,8 +123,14 @@ router.get('/trending/developers', async (req, res) => {
     try {
         const { language, since = 'daily' } = req.query;
         const langPath = language ? `/${language}` : '';
+        const cacheKey = `trending:devs:${language || 'all'}:${since}`;
+
+        try {
+            const cached = await redis.get(cacheKey);
+            if (cached) return res.json(cached);
+        } catch (e) {}
+
         const url = `https://github.com/trending/developers${langPath}?since=${since}`;
-        
         const { data } = await axios.get(url, { 
             headers: { 
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -127,6 +159,11 @@ router.get('/trending/developers', async (req, res) => {
             });
         });
 
+        try {
+            await redis.set(cacheKey, developers, { ex: 3600 });
+            await incrementUsage('trending_devs');
+        } catch (e) {}
+
         res.json(developers);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch trending developers' });
@@ -142,6 +179,13 @@ router.get('/trending/developers', async (req, res) => {
 router.get('/user/:username', async (req, res) => {
     try {
         const { username } = req.params;
+        const cacheKey = `user:${username}`;
+
+        try {
+            const cached = await redis.get(cacheKey);
+            if (cached) return res.json({ ...cached, cached: true });
+        } catch (e) {}
+
         const url = `https://github.com/${username}`;
         const { data } = await axios.get(url, { 
             headers: { 'User-Agent': 'Mozilla/5.0' } 
@@ -156,7 +200,7 @@ router.get('/user/:username', async (req, res) => {
         const location = $('.p-label:contains("Location")').parent().text().trim();
         const website = $('.p-label:contains("Website")').parent().text().trim();
         
-        res.json({
+        const result = {
             username,
             name,
             bio,
@@ -166,9 +210,41 @@ router.get('/user/:username', async (req, res) => {
             location,
             website,
             url
-        });
+        };
+
+        try {
+            await redis.set(cacheKey, result, { ex: 14400 });
+            await incrementUsage('user');
+        } catch (e) {}
+
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+});
+
+/**
+ * @openapi
+ * /github/stats:
+ *   get:
+ *     summary: Get persistent API usage stats
+ */
+router.get('/stats', async (req, res) => {
+    try {
+        const keys = [
+            'usage:github:repo',
+            'usage:github:trending',
+            'usage:github:trending_devs',
+            'usage:github:user',
+            'usage:total'
+        ];
+        const stats = {};
+        for (const key of keys) {
+            stats[key.replace('usage:', '')] = await redis.get(key) || 0;
+        }
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
 
