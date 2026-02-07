@@ -12,6 +12,8 @@ if (isDev) {
     db = {
         get: async (key) => storage.get(key),
         set: async (key, value, options) => {
+            if (options?.nx && storage.has(key)) return null;
+            
             storage.set(key, value);
             if (options?.ex) {
                 setTimeout(() => storage.delete(key), options.ex * 1000);

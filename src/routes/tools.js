@@ -278,10 +278,10 @@ router.get('/hit-counter/:id', async (req, res) => {
         let count;
         if (visitorId) {
             const lockKey = `lock:${id}:${visitorId}`;
-            const isNew = await redis.set(lockKey, '1', { nx: true, ex: 86400 });
-            count = isNew ? await redis.incr(key) : (await redis.get(key) || 0);
+            const isNew = await db.set(lockKey, '1', { nx: true, ex: 86400 });
+            count = isNew ? await db.incr(key) : (await db.get(key) || 0);
         } else {
-            count = await redis.incr(key);
+            count = await db.incr(key);
         }
 
         await trackUsage('hit_counter');
