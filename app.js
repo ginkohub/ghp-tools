@@ -48,7 +48,7 @@ mountRoutes('/api');
 // Swagger Docs
 const options = {
     definition: {
-        openapi: '3.0.0',
+        openapi: '3.1.0',
         info: { title: 'GinkoHub Tools API', version: '1.0.0' },
         servers: [
             { url: '/api', description: 'Main API' },
@@ -58,19 +58,11 @@ const options = {
     apis: ['./src/routes/*.js'],
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec = await swaggerJsdoc(options);
 
 app.get('/docs-json', (req, res) => {
     res.json(swaggerSpec);
 });
-
-const swaggerUiOptions = {
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css',
-    customJs: [
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.min.js'
-    ]
-};
 
 app.use('/docs', (req, res, next) => {
     // Only redirect if it is the root path and missing the trailing slash
@@ -79,7 +71,7 @@ app.use('/docs', (req, res, next) => {
         return res.redirect(301, req.originalUrl.replace('?', '/?').replace(/([^/])$/, '$1/'));
     }
     next();
-}, swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+}, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Error Handling
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
